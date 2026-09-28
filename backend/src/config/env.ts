@@ -32,6 +32,14 @@ function optionalPositiveIntEnv(key: string, fallback: number): number {
   return value;
 }
 
+function rpcUrlList(): string[] {
+  return [
+    requireEnv("STELLAR_RPC_URL"),
+    optionalEnv("STELLAR_RPC_URL_2", ""),
+    optionalEnv("STELLAR_RPC_URL_3", ""),
+  ].filter(Boolean);
+}
+
 export const env = {
   NODE_ENV: optionalEnv("NODE_ENV", "development"),
   PORT: parseInt(optionalEnv("PORT", "4000"), 10),
@@ -54,9 +62,6 @@ export const env = {
 
   /** How long an open circuit stays open before a half-open trial (ms). */
   STELLAR_RPC_COOLDOWN_MS: parseInt(optionalEnv("STELLAR_RPC_COOLDOWN_MS", "30000"), 10),
-
-  /** Per-request timeout for RPC calls (ms). */
-  STELLAR_RPC_TIMEOUT_MS: parseInt(optionalEnv("STELLAR_RPC_TIMEOUT_MS", "10000"), 10),
 
   /**
    * Network passphrase used when building simulation transactions.
