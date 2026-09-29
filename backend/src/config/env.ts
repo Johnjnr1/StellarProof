@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Centralised environment configuration.
  * All process.env reads happen here. Downstream modules import from `env`
  * and never access process.env directly.
@@ -33,11 +33,15 @@ function optionalPositiveIntEnv(key: string, fallback: number): number {
 }
 
 function rpcUrlList(): string[] {
-  return [
-    requireEnv("STELLAR_RPC_URL"),
-    optionalEnv("STELLAR_RPC_URL_2", ""),
-    optionalEnv("STELLAR_RPC_URL_3", ""),
-  ].filter(Boolean);
+  return Array.from(
+    new Set(
+      [
+        process.env.STELLAR_RPC_URL,
+        process.env.STELLAR_RPC_URL_2,
+        process.env.STELLAR_RPC_URL_3,
+      ].filter((value): value is string => Boolean(value))
+    )
+  );
 }
 
 export const env = {
@@ -77,8 +81,23 @@ export const env = {
    */
   STELLAR_NFT_BALANCE_FN: optionalEnv("STELLAR_NFT_BALANCE_FN", "balance"),
 
-  /** Max time (ms) to wait for a single Soroban RPC call before failing with 504 */
-  STELLAR_RPC_TIMEOUT_MS: parseInt(optionalEnv("STELLAR_RPC_TIMEOUT_MS", "30000"), 10),
+  /** Contract addresses, signers, and event ingestion settings. */
+  STELLAR_REGISTRY_CONTRACT_ID: optionalEnv("STELLAR_REGISTRY_CONTRACT_ID", ""),
+  STELLAR_ORACLE_CONTRACT_ID: optionalEnv("STELLAR_ORACLE_CONTRACT_ID", ""),
+  STELLAR_REGISTRY_ADMIN_SECRET_KEY: optionalEnv("STELLAR_REGISTRY_ADMIN_SECRET_KEY", ""),
+  STELLAR_ORACLE_SECRET_KEY: optionalEnv("STELLAR_ORACLE_SECRET_KEY", ""),
+  STELLAR_PROVENANCE_CONTRACT_ID: optionalEnv("STELLAR_PROVENANCE_CONTRACT_ID", ""),
+  EVENT_INGESTION_START_LEDGER: parseInt(optionalEnv("EVENT_INGESTION_START_LEDGER", "0"), 10),
+  EVENT_INGESTION_LIMIT: optionalPositiveIntEnv("EVENT_INGESTION_LIMIT", 100),
+  EVENT_INGESTION_POLL_INTERVAL_MS: optionalPositiveIntEnv(
+    "EVENT_INGESTION_POLL_INTERVAL_MS",
+    5_000
+  ),
+  STELLAR_TX_CONFIRMATION_TIMEOUT_MS: optionalPositiveIntEnv(
+    "STELLAR_TX_CONFIRMATION_TIMEOUT_MS",
+    120_000
+  ),
+
   /** Allowed CORS origin for the frontend. */
   CORS_ORIGIN: optionalEnv("CORS_ORIGIN", "http://localhost:3000"),
 
@@ -106,9 +125,29 @@ export const env = {
   /** Pinata public gateway base URL */
   PINATA_GATEWAY_URL: optionalEnv("PINATA_GATEWAY_URL", "https://gateway.pinata.cloud/ipfs"),
 
+  /**
+   * Bounded polling window used to observe Pinata's real pin state after an
+   * upload, so responses report `pinning` until the pin actually propagates.
+   */
+  IPFS_PIN_POLL_INTERVAL_MS: optionalPositiveIntEnv("IPFS_PIN_POLL_INTERVAL_MS", 500),
+  IPFS_PIN_POLL_TIMEOUT_MS: optionalPositiveIntEnv("IPFS_PIN_POLL_TIMEOUT_MS", 6_000),
+  IPFS_PIN_POLL_MAX_ATTEMPTS: optionalPositiveIntEnv("IPFS_PIN_POLL_MAX_ATTEMPTS", 8),
+
+  /** Max time (ms) to wait for the post-upload gateway availability probe */
+  IPFS_AVAILABILITY_TIMEOUT_MS: optionalPositiveIntEnv("IPFS_AVAILABILITY_TIMEOUT_MS", 4_000),
+
   /** Max time (ms) to wait for the IPFS gateway when resolving a CID */
   IPFS_RESOLVE_TIMEOUT_MS: optionalPositiveIntEnv("IPFS_RESOLVE_TIMEOUT_MS", 15_000),
 
   /** Max bytes downloaded from the IPFS gateway when resolving a CID (defaults to the 100 MB upload limit) */
   IPFS_RESOLVE_MAX_BYTES: optionalPositiveIntEnv("IPFS_RESOLVE_MAX_BYTES", 100 * 1024 * 1024),
+
+  /** Per-attempt timeout (ms) for a single IPFS upload request */
+  IPFS_UPLOAD_TIMEOUT_MS: optionalPositiveIntEnv("IPFS_UPLOAD_TIMEOUT_MS", 30_000),
+
+  /** Additional IPFS upload attempts after the first failure (0 disables retries) */
+  IPFS_UPLOAD_MAX_RETRIES: optionalNonNegativeIntEnv("IPFS_UPLOAD_MAX_RETRIES", 2),
+
+  /** Base delay (ms) for the exponential backoff between IPFS upload attempts */
+  IPFS_UPLOAD_BACKOFF_MS: optionalPositiveIntEnv("IPFS_UPLOAD_BACKOFF_MS", 500),
 } as const;
