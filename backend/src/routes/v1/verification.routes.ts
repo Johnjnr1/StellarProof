@@ -11,7 +11,7 @@ router.post('/submit', protect, verificationController.submit.bind(verificationC
 
 router.get(
   '/jobs/:id/stream',
-  validateParams({ id: z.string().regex(MONGO_OBJECT_ID_REGEX, "id must be a valid MongoDB ObjectId") }),
+  validateParams(z.object({ id: z.string().regex(MONGO_OBJECT_ID_REGEX, "id must be a valid MongoDB ObjectId") })),
   verificationController.subscribe.bind(verificationController)
 );
 
