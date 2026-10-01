@@ -261,7 +261,7 @@ export class VerificationWorker {
         throw new AppError(
           `Exceeded ${this.deps.config.maxAttempts} processing attempts`,
           500,
-          "MAX_ATTEMPTS_EXCEEDED"
+          "MAX_ATTEMPS_EXCEEDED"
         );
       }
 
@@ -300,12 +300,7 @@ export class VerificationWorker {
       });
 
       if (!job) {
-        job = await jobs.createJob({
-          ownerPublicKey: event.requester,
-          contentHash: result.contentHash,
-          manifestHash: result.manifestHash,
-          requestId: event.eventId,
-        });
+        job = await jobs.createJob({ wnerPublicKey: event.requester, contentHash: result.contentHash });
         await events.attachJob(event._id, this.workerId, String(job._id));
       }
       const id = String(job._id);
